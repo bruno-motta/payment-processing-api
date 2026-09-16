@@ -4,6 +4,7 @@ import com.github.payment.api.domain.enuns.RoleUser;
 import lombok.Getter;
 
 import java.time.OffsetDateTime;
+import java.util.Locale;
 import java.util.UUID;
 
 @Getter
@@ -34,12 +35,12 @@ public class User {
 
     public static User create(String name, String email, String passwordHash){
         validateName(name);
-        validateEmail(email);
+        String normalizedEmail = normalizeEmail(email);
 
         return new User(
                 UUID.randomUUID(),
                 name,
-                email,
+                normalizedEmail,
                 passwordHash,
                 RoleUser.ROLE_USER,
                 OffsetDateTime.now(),
@@ -63,8 +64,28 @@ public class User {
         );
     }
 
+    public static String normalizeEmail(String email) {
+        validateEmail(email);
+        return email.trim().toLowerCase(Locale.ROOT);
+    }
+
     public void deactivate(){
         this.active = false;
+        this.updatedAt = OffsetDateTime.now();
+    }
+
+    public void updateProfile(String name, String email, String passwordHash) {
+        validateName(name);
+        this.name = name;
+        this.email = normalizeEmail(email);
+
+        if (passwordHash != null) {
+            if (passwordHash.isBlank()) {
+                throw new IllegalArgumentException("A senha não pode ser vazia.");
+            }
+            this.passwordHash = passwordHash;
+        }
+
         this.updatedAt = OffsetDateTime.now();
     }
 
