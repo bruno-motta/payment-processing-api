@@ -6,10 +6,13 @@ import com.github.payment.api.infrastructure.persistence.entity.IdempotencyKeyEn
 import com.github.payment.api.infrastructure.persistence.mapper.IdempotencyKeyEntityMapper;
 import com.github.payment.api.infrastructure.persistence.repositories.IdempotencyKeyEntityRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 import java.util.UUID;
 
+@Component
 @RequiredArgsConstructor
 public class IdempotencyKeyRepositoryAdapter implements IdempotencyKeyRepository {
 

@@ -34,7 +34,7 @@ public class PaymentService implements CreatePaymentUseCase,
                                        RetryPaymentUseCase {
 
     private final PaymentRepository paymentRepository;
-    private IdempotencyKeyRepository idempotencyKeyRepository;
+    private final IdempotencyKeyRepository idempotencyKeyRepository;
     private final PaymentGatewayPort paymentGatewayPort;
     private final ObjectMapper objectMapper;
 
