@@ -117,10 +117,4 @@ Depois da terceira falha, o pagamento permanece em `FAILED` e não pode ser rete
 | Acesso a perfil de outro usuário | 403 |
 | E-mail já cadastrado | 409 |
 
-## Próximos passos
-
-- Tornar a idempotência segura para requisições simultâneas.
-- Implementar eventos de pagamento com Kafka e Transactional Outbox.
-- Receber e validar webhooks da Stripe.
-- Adicionar testes de integração para autenticação, usuários, pagamentos e Stripe.
-- Definir regras administrativas para consulta e gestão de outras contas.
+Wanderson Bruno. 
