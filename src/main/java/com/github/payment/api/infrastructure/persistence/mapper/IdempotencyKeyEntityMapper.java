@@ -3,7 +3,9 @@ package com.github.payment.api.infrastructure.persistence.mapper;
 import com.github.payment.api.domain.model.IdempotencyKey;
 import com.github.payment.api.infrastructure.persistence.entity.IdempotencyKeyEntity;
 import com.github.payment.api.infrastructure.persistence.entity.PaymentEntity;
+import org.springframework.stereotype.Component;
 
+@Component
 public class IdempotencyKeyEntityMapper {
 
     public IdempotencyKeyEntity toEntity(IdempotencyKey domain){
