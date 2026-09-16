@@ -1,8 +1,6 @@
 package com.github.payment.api.application.service;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.payment.api.application.dtos.request.CreatePaymentRequest;
 import com.github.payment.api.application.dtos.response.PaymentCreateResponse;
@@ -15,6 +13,7 @@ import com.github.payment.api.application.ports.out.IdempotencyKeyRepository;
 import com.github.payment.api.application.ports.out.PaymentGatewayPort;
 import com.github.payment.api.application.ports.out.PaymentGatewayResult;
 import com.github.payment.api.application.ports.out.PaymentRepository;
+import com.github.payment.api.domain.enuns.StatusPayment;
 import com.github.payment.api.domain.model.IdempotencyKey;
 import com.github.payment.api.domain.model.Payment;
 import jakarta.transaction.Transactional;
@@ -93,17 +92,64 @@ public class PaymentService implements CreatePaymentUseCase,
 
     @Override
     public PaymentCreateResponse findPaymentById(UUID paymentId) {
-        return null;
+        return paymentRepository.findById(paymentId)
+                .map(PaymentMapper::toResponse)
+                .orElseThrow(() -> new IllegalArgumentException("Pagamento não encontrado: " + paymentId));
     }
 
+    @Transactional
     @Override
     public PaymentCreateResponse refund(UUID paymentId) {
-        return null;
+        Payment payment = findPayment(paymentId);
+
+        if (payment.getStatus() != StatusPayment.APPROVED) {
+            throw new IllegalArgumentException("Somente pagamentos aprovados podem ser reembolsados.");
+        }
+
+        if (payment.getGatewayTransactionId() == null || payment.getGatewayTransactionId().isBlank()) {
+            throw new IllegalStateException("Pagamento aprovado sem identificador de transação no gateway.");
+        }
+
+        PaymentGatewayResult result = paymentGatewayPort.refund(payment.getGatewayTransactionId());
+        if (!result.success()) {
+            throw new IllegalStateException("Não foi possível realizar o reembolso no gateway.");
+        }
+
+        payment.refund();
+        Payment savedPayment = paymentRepository.save(payment);
+        log.info("Pagamento reembolsado: {} | refundId: {}", savedPayment.getId(), result.chargeId());
+
+        return PaymentMapper.toResponse(savedPayment);
     }
 
+    @Transactional
     @Override
     public PaymentCreateResponse retry(UUID paymentId) {
-        return null;
+        Payment payment = findPayment(paymentId);
+
+        if (!payment.isRetryable()) {
+            throw new IllegalArgumentException("Pagamento não pode ser retentado. Status: "
+                    + payment.getStatus() + ", tentativas: " + payment.getRetry());
+        }
+
+        payment.retry();
+        PaymentGatewayResult result = paymentGatewayPort.charge(payment, UUID.randomUUID().toString());
+
+        if (result.success()) {
+            payment.approve(result.chargeId());
+            log.info("Pagamento aprovado na retentativa: {} | chargeId: {}", payment.getId(), result.chargeId());
+        } else {
+            payment.fail();
+            log.warn("Retentativa do pagamento falhou: {}", payment.getId());
+        }
+
+        Payment savedPayment = paymentRepository.save(payment);
+        return PaymentMapper.toResponse(savedPayment);
+    }
+
+    private Payment findPayment(UUID paymentId) {
+        return paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new IllegalArgumentException("Pagamento não encontrado: " + paymentId));
     }
 
     // OBJETO JAVA -> JSON TEXT
