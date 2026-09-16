@@ -6,8 +6,10 @@ import com.github.payment.api.domain.model.Payment;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.Refund;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.PaymentIntentCreateParams;
+import com.stripe.param.RefundCreateParams;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -77,7 +79,20 @@ public class StripeGatewayAdapter implements PaymentGatewayPort {
 
     @Override
     public PaymentGatewayResult refund(String gatewayTransactionId) {
-        return null;
+        try {
+            RefundCreateParams params = RefundCreateParams.builder()
+                    .setPaymentIntent(gatewayTransactionId)
+                    .build();
+
+            Refund refund = Refund.create(params);
+            boolean success = "succeeded".equalsIgnoreCase(refund.getStatus());
+
+            log.info("Stripe respondeu ao reembolso {}: status={}", refund.getId(), refund.getStatus());
+            return new PaymentGatewayResult(refund.getId(), success);
+        } catch (StripeException e) {
+            log.error("Erro ao reembolsar transação {} na Stripe: {}", gatewayTransactionId, e.getMessage(), e);
+            return new PaymentGatewayResult(null, false);
+        }
     }
 
 
