@@ -6,5 +6,5 @@ import java.util.UUID;
 
 public interface FindPaymentByIdUseCase {
 
-    PaymentCreateResponse findPaymentById(UUID paymentId);
+    PaymentCreateResponse findPaymentById(UUID paymentId, UUID userId);
 }

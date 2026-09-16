@@ -6,5 +6,5 @@ import java.util.UUID;
 
 public interface RetryPaymentUseCase {
 
-    PaymentCreateResponse retry(UUID paymentId);
+    PaymentCreateResponse retry(UUID paymentId, UUID userId);
 }
