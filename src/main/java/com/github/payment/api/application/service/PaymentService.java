@@ -91,16 +91,16 @@ public class PaymentService implements CreatePaymentUseCase,
     }
 
     @Override
-    public PaymentCreateResponse findPaymentById(UUID paymentId) {
-        return paymentRepository.findById(paymentId)
+    public PaymentCreateResponse findPaymentById(UUID paymentId, UUID userId) {
+        return paymentRepository.findByIdAndUserId(paymentId, userId)
                 .map(PaymentMapper::toResponse)
                 .orElseThrow(() -> new IllegalArgumentException("Pagamento não encontrado: " + paymentId));
     }
 
     @Transactional
     @Override
-    public PaymentCreateResponse refund(UUID paymentId) {
-        Payment payment = findPayment(paymentId);
+    public PaymentCreateResponse refund(UUID paymentId, UUID userId) {
+        Payment payment = findPayment(paymentId, userId);
 
         if (payment.getStatus() != StatusPayment.APPROVED) {
             throw new IllegalArgumentException("Somente pagamentos aprovados podem ser reembolsados.");
@@ -124,8 +124,8 @@ public class PaymentService implements CreatePaymentUseCase,
 
     @Transactional
     @Override
-    public PaymentCreateResponse retry(UUID paymentId) {
-        Payment payment = findPayment(paymentId);
+    public PaymentCreateResponse retry(UUID paymentId, UUID userId) {
+        Payment payment = findPayment(paymentId, userId);
 
         if (!payment.isRetryable()) {
             throw new IllegalArgumentException("Pagamento não pode ser retentado. Status: "
@@ -147,8 +147,8 @@ public class PaymentService implements CreatePaymentUseCase,
         return PaymentMapper.toResponse(savedPayment);
     }
 
-    private Payment findPayment(UUID paymentId) {
-        return paymentRepository.findById(paymentId)
+    private Payment findPayment(UUID paymentId, UUID userId) {
+        return paymentRepository.findByIdAndUserId(paymentId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("Pagamento não encontrado: " + paymentId));
     }
 
